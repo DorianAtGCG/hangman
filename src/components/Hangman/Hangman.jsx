@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { debounce } from 'lodash';
 
 import './Hangman.css';
+import { words } from './words.js';
 
 /**
  * Returns an array of functions that draw each part of the Hangman on the
@@ -116,8 +117,9 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
   const drawnPartsRef = useRef(0);
   const previousIncorrectGuessCountRef = useRef(incorrectGuessCount);
   const [size, setSize] = useState();
-
+  const secret = words[Math.floor(Math.random() * words.length)];
   const hangmanParts = useMemo(() => getHangmanParts(size), [size]);
+  let guesses = [];
 
   // Resizes the canvas based on its parent's width
   const resizeCanvas = useCallback(() => {
@@ -145,8 +147,13 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
   // Reset and redraw whenever canvas size changes
   useEffect(resetCanvas, [size]);
 
-  // Draw the hangman parts
+  // Redraw when guess is entered
   useEffect(() => {
+
+  });
+
+  // Draw the hangman parts
+  const redrawParts = () => {
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
 
@@ -160,14 +167,49 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
     const partsToDraw = hangmanParts.slice(drawnPartsRef.current, incorrectGuessCount);
     partsToDraw.forEach(f => draw(context, f));
     drawnPartsRef.current = incorrectGuessCount;
-  }, [hangmanParts, incorrectGuessCount]);
+  };
+
+  useEffect(redrawParts, [hangmanParts, incorrectGuessCount]);
+
+  const nextGuessClick = () => {
+    incorrectGuessCount++;
+    const guessEl = document.getElementById('guess');
+    guesses.push(guessEl.value.toUpperCase());
+    guessEl.value = '';
+    redrawParts();
+  }
 
   return (
     <div className="Hangman" ref={containerRef}>
       <canvas ref={canvasRef} height={size} width={size}></canvas>
+      <Word guesses={guesses} secret={secret} />
+      <input type="text" maxLength="1" id="guess" />
+      <button onClick={nextGuessClick}>Guess</button>
     </div>
   );
 };
+
+function Letter(props) {
+  return (
+    <span>{props.value}</span>
+  );
+}
+
+function Word(props) {
+  const letters = [];
+  alert("rendering word");
+  for (let i = 0; i < props.secret.length; i++) {
+    let letter = props.secret.charAt(i);
+    let content = props.guesses.includes(letter) ? letter : '_';
+    letters.push(<Letter value={content} />);
+  }
+
+  return (
+    <div>
+      {letters}
+    </div>
+  );
+}
 
 Hangman.propTypes = {
   incorrectGuessCount: PropTypes.number.isRequired,

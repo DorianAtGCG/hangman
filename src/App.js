@@ -8,10 +8,11 @@ const App = () => {
     <div className="App">
       <div className="container">
         <h1>React Hangman</h1>
-        <Hangman incorrectGuessCount={10}></Hangman>
+        <Hangman incorrectGuessCount={0}></Hangman>
       </div>
     </div>
   );
 };
+
 
 export default App;
