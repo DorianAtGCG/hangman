@@ -118,8 +118,9 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
   const previousIncorrectGuessCountRef = useRef(incorrectGuessCount);
   const [size, setSize] = useState();
   const secret = words[Math.floor(Math.random() * words.length)];
+  let guesses = [];  
+
   const hangmanParts = useMemo(() => getHangmanParts(size), [size]);
-  let guesses = [];
 
   // Resizes the canvas based on its parent's width
   const resizeCanvas = useCallback(() => {
@@ -164,23 +165,21 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
     drawnPartsRef.current = incorrectGuessCount;
   };
 
+  // User made a guess. Update Hangman state.
   const nextGuessClick = (e) => {
     incorrectGuessCount++;
-    const guessTbEl = document.getElementById('guess-textbox');
-    guesses.push(guessTbEl.value.toUpperCase());
-    guessTbEl.value = '';
-    console.log(incorrectGuessCount, guesses, secret);
+    document.getElementById('guess-textbox').value = '';
+    guesses.push(e.key.toUpperCase());    
     redrawParts();
 
-    let content = '';
-    for (let i = 0; i < secret.length; i++) {
-      let letter = secret.charAt(i);
-      let show = guesses.includes(letter) ? letter : '_';
-      content += show;
-    }
-
+    // Render the word with correctly-guessed letters showing, blanks for remaining letters.
     const wordEl = document.getElementById('word');
-    wordEl.innerText = content;
+    wordEl.innerText = '';
+    for (let i = 0; i < secret.length; i++) {
+      let secretLetter = secret.charAt(i);
+      let show = guesses.includes(secretLetter) ? secretLetter : '_';
+      wordEl.innerText += show;
+    }
 
     // win/loss detection  
     const guessControls = document.getElementById('guess-controls');
@@ -193,6 +192,8 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
       wordEl.innerText = 'You lose. The word is: ' + secret;
       guessControls.parentNode.removeChild(guessControls);
     }
+
+    console.log(incorrectGuessCount, guesses, secret);
   }
 
   return (
@@ -200,7 +201,7 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
       <canvas ref={canvasRef} height={size} width={size}></canvas>
       <div id="word" />
       <div id="guess-controls">
-        Guess a letter: <input type="text" id="guess-textbox" onChange={nextGuessClick} />
+        Guess a letter: <input type="text" id="guess-textbox" onKeyUp={nextGuessClick} />
       </div>
     </div>
   );
