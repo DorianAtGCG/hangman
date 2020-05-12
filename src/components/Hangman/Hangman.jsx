@@ -147,11 +147,6 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
   // Reset and redraw whenever canvas size changes
   useEffect(resetCanvas, [size]);
 
-  // Redraw when guess is entered
-  useEffect(() => {
-
-  });
-
   // Draw the hangman parts
   const redrawParts = () => {
     const canvas = canvasRef.current;
@@ -169,47 +164,47 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
     drawnPartsRef.current = incorrectGuessCount;
   };
 
-  useEffect(redrawParts, [hangmanParts, incorrectGuessCount]);
-
-  const nextGuessClick = () => {
+  const nextGuessClick = (e) => {
     incorrectGuessCount++;
-    const guessEl = document.getElementById('guess');
-    guesses.push(guessEl.value.toUpperCase());
-    guessEl.value = '';
+    const guessTbEl = document.getElementById('guess-textbox');
+    guesses.push(guessTbEl.value.toUpperCase());
+    guessTbEl.value = '';
+    console.log(incorrectGuessCount, guesses, secret);
     redrawParts();
+
+    let content = '';
+    for (let i = 0; i < secret.length; i++) {
+      let letter = secret.charAt(i);
+      let show = guesses.includes(letter) ? letter : '_';
+      content += show;
+    }
+
+    const wordEl = document.getElementById('word');
+    wordEl.innerText = content;
+
+    // win/loss detection  
+    const guessControls = document.getElementById('guess-controls');
+    if (wordEl.innerText.indexOf('_') < 0) {
+      wordEl.innerText = 'You win! The word is: ' + secret;
+      guessControls.parentNode.removeChild(guessControls);
+    }
+
+    if (incorrectGuessCount > hangmanParts.length) {
+      wordEl.innerText = 'You lose. The word is: ' + secret;
+      guessControls.parentNode.removeChild(guessControls);
+    }
   }
 
   return (
     <div className="Hangman" ref={containerRef}>
       <canvas ref={canvasRef} height={size} width={size}></canvas>
-      <Word guesses={guesses} secret={secret} />
-      <input type="text" maxLength="1" id="guess" />
-      <button onClick={nextGuessClick}>Guess</button>
+      <div id="word" />
+      <div id="guess-controls">
+        Guess a letter: <input type="text" id="guess-textbox" onChange={nextGuessClick} />
+      </div>
     </div>
   );
 };
-
-function Letter(props) {
-  return (
-    <span>{props.value}</span>
-  );
-}
-
-function Word(props) {
-  const letters = [];
-  alert("rendering word");
-  for (let i = 0; i < props.secret.length; i++) {
-    let letter = props.secret.charAt(i);
-    let content = props.guesses.includes(letter) ? letter : '_';
-    letters.push(<Letter value={content} />);
-  }
-
-  return (
-    <div>
-      {letters}
-    </div>
-  );
-}
 
 Hangman.propTypes = {
   incorrectGuessCount: PropTypes.number.isRequired,
