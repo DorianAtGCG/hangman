@@ -149,7 +149,7 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
   useEffect(resetCanvas, [size]);
 
   // Draw the hangman parts
-  const redrawParts = () => {
+  const drawParts = useCallback(() => {
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
 
@@ -163,14 +163,13 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
     const partsToDraw = hangmanParts.slice(drawnPartsRef.current, incorrectGuessCount);
     partsToDraw.forEach(f => draw(context, f));
     drawnPartsRef.current = incorrectGuessCount;
-  };
+  }, [hangmanParts, incorrectGuessCount]);
 
   // User made a guess. Update Hangman state.
-  const nextGuessClick = (e) => {
+  const nextGuess = useCallback((e) => {
     incorrectGuessCount++;
-    document.getElementById('guess-textbox').value = '';
-    guesses.push(e.key.toUpperCase());    
-    redrawParts();
+    guesses.push(e.key.toUpperCase());
+    drawParts();
 
     // Render the word with correctly-guessed letters showing, blanks for remaining letters.
     const wordEl = document.getElementById('word');
@@ -182,27 +181,25 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
     }
 
     // win/loss detection  
-    const guessControls = document.getElementById('guess-controls');
     if (wordEl.innerText.indexOf('_') < 0) {
       wordEl.innerText = 'You win! The word is: ' + secret;
-      guessControls.parentNode.removeChild(guessControls);
-    }
-
-    if (incorrectGuessCount > hangmanParts.length) {
+      window.removeEventListener('keyup', nextGuess);
+    } else if (incorrectGuessCount >= hangmanParts.length) {
       wordEl.innerText = 'You lose. The word is: ' + secret;
-      guessControls.parentNode.removeChild(guessControls);
+      window.removeEventListener('keyup', nextGuess);
     }
+  }, [drawParts, guesses, hangmanParts.length, incorrectGuessCount, secret]);
 
-    console.log(incorrectGuessCount, guesses, secret);
-  }
+  // User typed a letter into the browser
+  useEffect(() => {
+    window.addEventListener('keyup', nextGuess);
+    return () => window.removeEventListener('keyup', nextGuess);
+  }, [nextGuess]);
 
   return (
     <div className="Hangman" ref={containerRef}>
       <canvas ref={canvasRef} height={size} width={size}></canvas>
-      <div id="word" />
-      <div id="guess-controls">
-        Guess a letter: <input type="text" id="guess-textbox" onKeyUp={nextGuessClick} />
-      </div>
+      <div id="word">Type to guess a letter.</div>
     </div>
   );
 };
