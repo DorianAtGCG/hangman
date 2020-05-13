@@ -118,7 +118,7 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
   const previousIncorrectGuessCountRef = useRef(incorrectGuessCount);
   const [size, setSize] = useState();
   const secret = words[Math.floor(Math.random() * words.length)];
-  let guesses = [];  
+  let correctGuesses = [];
 
   const hangmanParts = useMemo(() => getHangmanParts(size), [size]);
 
@@ -168,7 +168,12 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
   // User made a guess. Update Hangman state.
   const nextGuess = useCallback((e) => {
     incorrectGuessCount++;
-    guesses.push(e.key.toUpperCase());
+    document.getElementById('guesses-remaining').innerText = 10 - incorrectGuessCount;
+    const guessedLetter = e.key.toUpperCase();
+    if (secret.indexOf(guessedLetter) < 0)
+      document.getElementById('incorrect-guesses').innerText += guessedLetter;
+    else
+      correctGuesses.push(guessedLetter);
     drawParts();
 
     // Render the word with correctly-guessed letters showing, blanks for remaining letters.
@@ -176,7 +181,7 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
     wordEl.innerText = '';
     for (let i = 0; i < secret.length; i++) {
       let secretLetter = secret.charAt(i);
-      let show = guesses.includes(secretLetter) ? secretLetter : '_';
+      let show = correctGuesses.includes(secretLetter) ? secretLetter : '_';
       wordEl.innerText += show;
     }
 
@@ -188,7 +193,7 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
       wordEl.innerText = 'You lose. The word is: ' + secret;
       window.removeEventListener('keyup', nextGuess);
     }
-  }, [drawParts, guesses, hangmanParts.length, incorrectGuessCount, secret]);
+  }, [drawParts, correctGuesses, hangmanParts.length, incorrectGuessCount, secret]);
 
   // User typed a letter into the browser
   useEffect(() => {
@@ -200,6 +205,9 @@ export const Hangman = ({ incorrectGuessCount = 0 }) => {
     <div className="Hangman" ref={containerRef}>
       <canvas ref={canvasRef} height={size} width={size}></canvas>
       <div id="word">Type to guess a letter.</div>
+      <div>Guesses remaining: <span id="guesses-remaining">10</span></div>
+      <div>Incorrect guesses: <span id="incorrect-guesses"></span></div>
+      <button onClick={() => window.location.reload()}>Restart Game</button>
     </div>
   );
 };
